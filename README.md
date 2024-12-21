@@ -7,7 +7,16 @@ Tines makes this challenge much easier through their SOAR automation platform.
 
 This past month, we launched a Tines webform, where a security analyst can add IOCs to all our backend security solutions.  In addtion, a ServiceNow incident is logged along with sharing the IOCs with our partner institutions via [MISP](https://github.com/MISP/MISP), the open-source threat intel sharing platform.
 
-Prior to the IOC management webform project, I did not work with the Cisco Umbrella API.  
+Prior to the IOC management webform project, I did not work with the Cisco Umbrella API. 
+Destinations in Umbrella
+
+It is straightforward to add the IOC to Umbrella, but to remove the IOC is a challenge since there is no way query the Umbrella destinations endpoint for the destination Umbrella ID.
+
+## Cannot query the Cisco Umbrela ID
+
+## Pagination
+
+
 
 
 
