@@ -56,6 +56,8 @@ Tom
 - [Tines University](https://www.tines.com/university/)
 - [Tines & AI](https://www.tines.com/product/ai/)
 - [Tines WHERE Function](https://www.tines.com/docs/formulas/functions/where/)
+- [Tines FILTER Function](https://www.tines.com/docs/formulas/functions/filter/)
+- [Tines INCLUDES Function](https://www.tines.com/docs/formulas/functions/includes/)
 
 ## Cisco Technical Resources
 - [Cisco Umbrella Sign Up](https://signup.umbrella.com/)
