@@ -30,7 +30,7 @@ In order to remove a destination, the workflow builds the entire list of Umbrell
 
 Under the [tines](https://github.com/AutomateSecOps/Blocking-Domains-Automated/tree/main/story) folder, I include the pagination loop for building the array in order to obtain the destination's Umbrella ID.
 
-I opened a ticket with Umbrella support to update their API schema to allow for a direct query for a destiatnion's Umbrella ID.
+I opened a ticket with Umbrella support to update their API schema to allow for a direct query to obtain a destiatnion's Umbrella ID.
 
 In addition, I have two workflows which manage the entire lifecycle of the blocked destination.  The first IOC management workflow adds or removes the blocked destination to a sunset list.  The second one filters the sunset list for blocked destinations older than 90 days.
 
