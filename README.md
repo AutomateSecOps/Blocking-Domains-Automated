@@ -36,7 +36,7 @@ I opened a ticket with Umbrella support to update their API schema to allow for 
 In addition, I have two workflows which manage the entire lifecycle of the blocked destination.  The first IOC management workflow adds or removes the blocked destination to a sunset list.  The second one filters the sunset list for blocked destinations older than 90 days.
 
 ## A Trigger action to check the sunset list prior to removing it from the Tines Resource.
-While performing quality checks on the workflow, I selected the Remove action from the webform instead of the Add action.  When the domain IOC was sent to the IOC management workflow, it generated a null value when checking for the index of the IOC since it was not present in the sunset list.  For some reason the null value caused the Tines action to remove a random domain from the sunset list.  
+While performing quality checks on the workflow, I selected the Remove action from the webform instead of the Add action.  When the domain IOC was sent for removal to the IOC management workflow, it generated a null value when checking for the index of the IOC since it was not present in the sunset list.  For some reason the null value caused the Tines action to remove a random domain from the sunset list.  
 
 I used this trigger to prevent this from happening:
 <img src="./images/Trigger_IOC_Present.png">
