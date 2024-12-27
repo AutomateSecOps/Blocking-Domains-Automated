@@ -1,0 +1,2082 @@
+{
+  "schema_version": 26,
+  "standard_lib_version": 66,
+  "action_runtime_version": 18,
+  "name": "Cisco Umbrella IOC Lifecycle Management",
+  "description": null,
+  "guid": "72b23852719d40d25f5b90d8a367b250",
+  "slug": "cisco_umbrella_ioc_lifecycle_management",
+  "agents": [
+    {
+      "type": "Agents::WebhookAgent",
+      "name": "Cisco Umbrella Webhook",
+      "disabled": false,
+      "description": null,
+      "guid": "1fe4df16995b43cc7d9f48f5f96b098b",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:12d5776dc26e6e808d67fc16a1e4f1ff",
+      "options": {
+        "path": "99e45df797bea0779facdb5801760949",
+        "secret": "cd4bbf4a225662dc072445a7ef704828",
+        "verbs": "get,post"
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "Block Destination in Umbrella instance",
+      "disabled": false,
+      "description": null,
+      "guid": "bc8716d479156264230ed5fb6a21e6cd",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:e98d71dddfc918c7f03350ee63c5b3fb",
+      "options": {
+        "url": "https://api.umbrella.com/policies/v2/destinationlists/<<RESOURCE.destination_list_policy_number>>/destinations",
+        "content_type": "application_json",
+        "method": "post",
+        "payload": [
+          {
+            "destination": "=cisco_umbrella_webhook.body.domain",
+            "comment": "=DATE(\"now\", \"%Y-%m\") & \"-\" & cisco_umbrella_webhook.body.comments & \":\" & cisco_umbrella_webhook.body.analyst_name"
+          }
+        ],
+        "headers": {
+          "Authorization": "Bearer <<CREDENTIAL.cisco_umbrella>>"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::EventTransformationAgent",
+      "name": "Throttle",
+      "disabled": false,
+      "description": null,
+      "guid": "bc7c19953cb5235013ce33695938b100",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:7c49424df557805cc2b62a047090a945",
+      "options": {
+        "mode": "throttle",
+        "interval": "minute",
+        "capacity": "30",
+        "events_per_run": 1
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "Get Destinations in Cisco Umbrella",
+      "disabled": false,
+      "description": "Retrieve a list of Destinations Lists using the Cisco Umbrella Management API",
+      "guid": "f91468953a01daeb6ffdd6e5836ee746",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:e98d71dddfc918c7f03350ee63c5b3fb",
+      "options": {
+        "url": "https://api.umbrella.com/policies/v2/destinationlists/<<RESOURCE.destination_list_policy_number>>/destinations?limit=100",
+        "method": "get",
+        "headers": {
+          "Authorization": "Bearer <<CREDENTIAL.cisco_umbrella>>"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": true,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": "34bbeaf88567971eb86426a7fd0c41a497ccb319f61934e3a1d23e7e041d4829",
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::EventTransformationAgent",
+      "name": "Destinations Array",
+      "disabled": false,
+      "description": null,
+      "guid": "ab714a2d141f3e103ec51aec65e65375",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:d8aa079f947e2159d27bd579e71d131d",
+      "options": {
+        "mode": "message_only",
+        "loop": false,
+        "payload": {
+          "array": "=get_destinations_in_cisco_umbrella.body.data"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::TriggerAgent",
+      "name": "Trigger Action",
+      "disabled": false,
+      "description": null,
+      "guid": "6b8d858f1d83e400ba2f0d57c8192c84",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:d8aa079f947e2159d27bd579e71d131d",
+      "options": {
+        "rules": [
+          {
+            "path": "<<get_destinations_in_cisco_umbrella.body.data>>",
+            "type": "field!=value",
+            "value": "[]"
+          }
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::EventTransformationAgent",
+      "name": "Delay 2 Seconds",
+      "disabled": false,
+      "description": null,
+      "guid": "d598fa0c16d8a5cbc56f194f541dbc08",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:d8aa079f947e2159d27bd579e71d131d",
+      "options": {
+        "mode": "delay",
+        "seconds": "2"
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::EventTransformationAgent",
+      "name": "Destinations Array",
+      "disabled": false,
+      "description": null,
+      "guid": "102b210ce80f84eb9d220bcf7b288674",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:d8aa079f947e2159d27bd579e71d131d",
+      "options": {
+        "mode": "message_only",
+        "loop": false,
+        "payload": {
+          "array": "=CONCAT(get_destinations_in_cisco_umbrella.body.data, destinations_array.array)"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "Get Destinations in Cisco Umbrella",
+      "disabled": false,
+      "description": "Retrieve a list of Destinations Lists using the Cisco Umbrella Management API",
+      "guid": "0aadb8bece539e63d3c79a503ccbe1ac",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:e98d71dddfc918c7f03350ee63c5b3fb",
+      "options": {
+        "url": "https://api.umbrella.com/policies/v2/destinationlists/<<RESOURCE.destination_list_policy_number>>/destinations?page=<<increment_counter.counter + 1>>&limit=100",
+        "method": "get",
+        "headers": {
+          "Authorization": "Bearer <<CREDENTIAL.cisco_umbrella>>"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": "34bbeaf88567971eb86426a7fd0c41a497ccb319f61934e3a1d23e7e041d4829",
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::EventTransformationAgent",
+      "name": "Obtain Umbrella Destination Info",
+      "disabled": false,
+      "description": null,
+      "guid": "f2c1e73373622e42c55c3587b2d6434f",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:ee914734332d735c823004fffcccecdd",
+      "options": {
+        "mode": "message_only",
+        "loop": false,
+        "payload": {
+          "id": "=WHERE(destinations_array.array, \"destination\", cisco_umbrella_webhook.body.domain)[0].id"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "Remove Blocked Destination",
+      "disabled": false,
+      "description": "Created from cURL command",
+      "guid": "43c352cccb830f303c3b0c295c5d363f",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:7b21cce09905ceed8b30c665dda05f2f",
+      "options": {
+        "url": "https://api.umbrella.com/policies/v2/destinationlists/<<RESOURCE.destination_list_policy_number>>/destinations/remove",
+        "method": "delete",
+        "content_type": "application_json",
+        "payload": [
+          "<<obtain_umbrella_destination_info.id>>"
+        ],
+        "headers": {
+          "Accept": "application/json",
+          "Authorization": "Bearer <<CREDENTIAL.cisco_umbrella>>"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::EventTransformationAgent",
+      "name": "Increment Counter",
+      "disabled": false,
+      "description": "",
+      "guid": "1cfc4540fd45004fdb542bb880934346",
+      "origin_story_identifier": "cloud:d521f765a49c72507257a2620612ee96:b6ba9a48c4bda40bb9dfa52b14d9490a",
+      "options": {
+        "mode": "message_only",
+        "payload": {
+          "counter": "<<PLUS(increment_counter.counter, 1)>>"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::EventTransformationAgent",
+      "name": "2 Second Delay",
+      "disabled": false,
+      "description": null,
+      "guid": "5f8511ab3210105635860ed9d877e457",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:7b21cce09905ceed8b30c665dda05f2f",
+      "options": {
+        "mode": "delay",
+        "seconds": "2"
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::TriggerAgent",
+      "name": "Add Destination?",
+      "disabled": false,
+      "description": null,
+      "guid": "a4f68425eccf7e24148690a015c3372c",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:12d5776dc26e6e808d67fc16a1e4f1ff",
+      "options": {
+        "rules": [
+          {
+            "path": "=cisco_umbrella_webhook.body.action",
+            "type": "in",
+            "value": "Add"
+          }
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::EventTransformationAgent",
+      "name": "Exit",
+      "disabled": false,
+      "description": null,
+      "guid": "01bb100f44a8b3033092a617478900b6",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:12d5776dc26e6e808d67fc16a1e4f1ff",
+      "options": {
+        "mode": "message_only",
+        "loop": false,
+        "payload": {
+          "message": "This is an automatically generated message from Tines"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::FormAgent",
+      "name": "Add or Remove Destinations in Cisco Umbrella",
+      "disabled": false,
+      "description": null,
+      "guid": "7e2ce8b46ae0741da1ccfc816c9a34d1",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:12d5776dc26e6e808d67fc16a1e4f1ff",
+      "options": {
+        "fields": "",
+        "mode": "story_run",
+        "visibility": "tenant",
+        "anonymize": false,
+        "auto_submit": false,
+        "page_logo": {
+          "name": "TinesLogoWhite-PurpleBG.svg",
+          "type": "image/svg+xml",
+          "contents": "PHN2ZyB3aWR0aD0iMTkyMCIgaGVpZ2h0PSIxMDgwIiB2aWV3Qm94PSIwIDAgMTkyMCAxMDgwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cmVjdCB3aWR0aD0iMTkyMCIgaGVpZ2h0PSIxMDgwIiBmaWxsPSIjOEQ3NUU2Ii8+CjxwYXRoIGQ9Ik05MDIuMjgxIDQ5OC44NjhIODgwLjAxNFY1MjIuMDM0SDkwMi4yODFWNTcyLjY0MUM5MDIuMjgxIDU5Ny44MzIgOTE4LjQ3NSA2MTIuMjI3IDk0My4yMTYgNjEyLjIyN0g5NjEuNDM0VjU4Ny4yNjFIOTQ2LjM2NUM5MzYuMDE5IDU4Ny4yNjEgOTI5Ljk0NiA1ODEuNDEzIDkyOS45NDYgNTY5Ljk0MlY1MjIuMDM0SDk2MS40MzRWNDk4Ljg2OEg5MjkuOTQ2VjQ2NC42OEg5MDIuMjgxVjQ5OC44NjhaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNOTc0LjMyNyA0ODEuMDk5SDEwMDQuOTJWNDQ5LjYxSDk3NC4zMjdWNDgxLjA5OVpNMTAwMy4zNCA2MTIuMjI3VjQ5OC44NjhIOTc1LjY3NlY2MTIuMjI3SDEwMDMuMzRaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTA0Ny45NyA2MTIuMjI3VjU1MC4zNzRDMTA0Ny45NyA1MzMuNzMgMTA1OC43NiA1MjEuNTg0IDEwNzQuMjggNTIxLjU4NEMxMDg4LjQ1IDUyMS41ODQgMTA5Ny45IDUzMi4zODEgMTA5Ny45IDU0Ny45VjYxMi4yMjdIMTEyNS41NlY1NDIuMDUyQzExMjUuNTYgNTE1LjUxMiAxMTA4LjkyIDQ5Ny4wNjggMTA4My4yOCA0OTcuMDY4QzEwNjcuMDggNDk3LjA2OCAxMDU0LjI2IDUwNC4wNDEgMTA0Ny45NyA1MTYuNDExVjQ5OC44NjhIMTAyMC4zVjYxMi4yMjdIMTA0Ny45N1oiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0xMjIwLjUxIDU3NC40NEMxMjE3LjU4IDU4NS4yMzcgMTIwOC4zNiA1OTEuMDg0IDExOTQuMTkgNTkxLjA4NEMxMTc2LjY1IDU5MS4wODQgMTE2NC45NSA1NzkuMzg5IDExNjIuOTMgNTYxLjE3SDEyNDYuNkMxMjQ2LjgyIDU1OC45MjEgMTI0Ny4wNSA1NTUuNTQ3IDEyNDcuMDUgNTUxLjcyNEMxMjQ3LjA1IDUyNC43MzMgMTIyOS45NSA0OTcuMDY4IDExOTEuOTQgNDk3LjA2OEMxMTU0LjgzIDQ5Ny4wNjggMTEzNi4zOSA1MjUuMTgzIDExMzYuMzkgNTU1LjA5N0MxMTM2LjM5IDU4NC43ODcgMTE1Ny4wOCA2MTQuMDI2IDExOTQuMTkgNjE0LjAyNkMxMjIyLjA4IDYxNC4wMjYgMTI0My4yMiA1OTguNTA3IDEyNDcuNSA1NzQuNDRIMTIyMC41MVpNMTE5MS45NCA1MTcuNzYxQzEyMDguMzYgNTE3Ljc2MSAxMjE4LjI2IDUyOC41NTcgMTIxOS4zOCA1NDIuOTUySDExNjMuNkMxMTY2LjUzIDUyNS44NTggMTE3Ni40MiA1MTcuNzYxIDExOTEuOTQgNTE3Ljc2MVoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0xMzAyLjU4IDYxNC4wMjZDMTMyOS4xMiA2MTQuMDI2IDEzNDYuNDQgNjAwLjA4MSAxMzQ2LjQ0IDU3OC43MTRDMTM0Ni40NCA1MjcuNDMyIDEyODMuNDcgNTU0LjQyMyAxMjgzLjQ3IDUyOS45MDZDMTI4My40NyA1MjIuMjU5IDEyODkuOTkgNTE3Ljc2MSAxMjk5Ljg4IDUxNy43NjFDMTMwOC42NiA1MTcuNzYxIDEzMTguMzMgNTIzLjE1OSAxMzE5LjkgNTMzLjczSDEzNDUuMDlDMTM0My45NyA1MTEuNjg4IDEzMjUuNzUgNDk3LjA2OCAxMjk5LjIxIDQ5Ny4wNjhDMTI3NS44MiA0OTcuMDY4IDEyNTguNSA1MTEuMDEzIDEyNTguNSA1MzAuODA2QzEyNTguNSA1NzguNzE0IDEzMjAuNTggNTU0LjY0OCAxMzIwLjU4IDU3OS44MzlDMTMyMC41OCA1ODYuNTg2IDEzMTMuMzggNTkxLjk4NCAxMzAyLjU4IDU5MS45ODRDMTI5MC4yMSA1OTEuOTg0IDEyODEuODkgNTg1LjIzNyAxMjgwLjc3IDU3NC40NEgxMjU1LjU4QzEyNTYuOTMgNTk4LjczMiAxMjc1LjE0IDYxNC4wMjYgMTMwMi41OCA2MTQuMDI2WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik02NTguMzk3IDQyMEM2MjkuOTkzIDQyMCA2MDQuODc4IDQzOC40MzEgNTk2LjM3OCA0NjUuNTE1TDU3MyA1NDBMNTk2LjM3OCA2MTQuNDg1QzYwNC44NzggNjQxLjU2OSA2MjkuOTkzIDY2MCA2NTguMzk3IDY2MEg3MjEuMzY5Qzc0OS43NzMgNjYwIDc3NC44ODcgNjQxLjU2OSA3ODMuMzg4IDYxNC40ODVMODA2Ljc2NiA1NDBMNzgzLjM4OCA0NjUuNTE1Qzc3NC44ODcgNDM4LjQzMSA3NDkuNzczIDQyMCA3MjEuMzY5IDQyMEg2NTguMzk3Wk03MjEuMzcgNDM4LjcyM0M3NDEuNTg3IDQzOC43MjMgNzU5LjQ2MiA0NTEuODQxIDc2NS41MTMgNDcxLjExOEw3NzEuMjQ0IDQ4OS4zOEM3NTkuNzE0IDQ3OS44NjEgNzQ1LjExMyA0NzQuNTA0IDcyOS44NTIgNDc0LjUwM0w2NDkuNzQzIDQ3NC41MDFDNjM0LjU4NSA0NzQuNTAyIDYyMC4wNzggNDc5Ljc4OCA2MDguNTg1IDQ4OS4xODZMNjE0LjI1NSA0NzEuMTE4QzYyMC4zMDYgNDUxLjg0MSA2MzguMTgxIDQzOC43MjMgNjU4LjM5OCA0MzguNzIzSDcyMS4zN1pNNjEyLjkwOSA1MTEuNDg5TDU5OC4zNTMgNTMwLjYzOUw3ODEuMjQxIDUzMC42MzlMNzY2LjY4NyA1MTEuNDkyQzc1Ny45MzkgNDk5Ljk4NSA3NDQuMzExIDQ5My4yMjcgNzI5Ljg1MSA0OTMuMjI2SDY0OS4zMDdDNjM1LjAxIDQ5My4zNjEgNjIxLjU2OCA1MDAuMDk5IDYxMi45MDkgNTExLjQ4OVpNNzgxLjIxMiA1NDkuMzYyTDc2Ni42ODUgNTY4LjQ5MkM3NTcuOTM3IDU4MC4wMTEgNzQ0LjMgNTg2Ljc3NyA3MjkuODI4IDU4Ni43NzZMNjQ5Ljc2NSA1ODYuNzc0QzYzNS4yOTQgNTg2Ljc3NSA2MjEuNjU2IDU4MC4wMDkgNjEyLjkwOCA1NjguNDg5TDU5OC4zODMgNTQ5LjM2Mkw3ODEuMjEyIDU0OS4zNjJaTTYxNC4yNTQgNjA4Ljg4MkM2MjAuMzA1IDYyOC4xNTkgNjM4LjE4IDY0MS4yNzcgNjU4LjM5NyA2NDEuMjc3SDcyMS4zNjlDNzQxLjU4NiA2NDEuMjc3IDc1OS40NjEgNjI4LjE1OSA3NjUuNTExIDYwOC44ODJMNzcxLjI0NyA1OTAuNjA3Qzc1OS43MTIgNjAwLjEzNiA3NDUuMSA2MDUuNSA3MjkuODI3IDYwNS40OTlMNjQ5Ljc2NiA2MDUuNDk3QzYzNC41OTYgNjA1LjQ5OCA2MjAuMDc3IDYwMC4yMDYgNjA4LjU3OCA1OTAuNzk1TDYxNC4yNTQgNjA4Ljg4MloiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=",
+          "display_logo": true
+        },
+        "page_width": "small",
+        "pages_action_color": "#777FFF",
+        "pages_appearance_mode": "dark",
+        "pages_background_color": "#F9F9F9",
+        "url_identifier": "771fb46a3dc82c4ba1f4f6dab117d359",
+        "loading_message": "Please wait…"
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::FormAgent",
+      "name": "Back to Submission Page",
+      "disabled": false,
+      "description": null,
+      "guid": "066dbb8c242d49558f5b3e6179fc6213",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:12d5776dc26e6e808d67fc16a1e4f1ff",
+      "options": {
+        "fields": "",
+        "mode": "redirect",
+        "visibility": "tenant",
+        "anonymize": false,
+        "auto_submit": true,
+        "page_logo": {
+          "contents": "iVBORw0KGgoAAAANSUhEUgAAAFQAAAAYCAYAAABk8drWAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAARCSURBVHgB7VhLctpAEB1k7LVyA/kEgRMEn8BQ5e8qcALjE1icAPsEkJW/VeATwA1QTmDlBCE7l3/kPblbTIiMJcVOeaFXBRrN9Mz0vOnu6ZExBQoUKFCgwAdByX4ZDAbuw8PDwWw2a+LVk+rAcZxgZWWl02g0QpMSl5eXXRlnvLq62kLfqcmIi4uLZqlU+lwulztJ/aGvJ/p+39nZ6cu8R3j30c/f3t7umP8MRwtXV1df7+/vb6iMmZNJVJ6enppom5ydnbVNCpAIjENZF786Fn1kMgLE1PDocRz0HyTJQKe2zNOjMbBO3o1sZgS2Ybw29KqYd0ZEKMg8AGl980zAS3BhqV0Sv0Qmsho8/iCQi5T6XED/WtJmoj7W9/b2Vgk9gXUGWM+JtoF4H/VdFEdK/HvB4UIxuZ+2A2SPlykFayLhXkJ9z/wDsJlHaTZld3fXR4ho7O3tHWudRbyrxC+Ca+L4rxFuyXlJ7c7j4yOtKcuuuXd3d+0XJvMkZPwFWpm4cV64sLTBawuGB/UYus7Pz7vUB3NOYLGxV+EsuIHrT2ydITNCn5/sxyfaKdO0x02Qo8wNY7Yt52ChmeOKraAN2ZxlyBxLZb6xFCuvxWN4UE361PGYYn1egli0KSQJxIy42VIfso959rCehplFOYYUkY0MCJvn68C5CDUJLi2ho7msExVa3Pk0QL9veJxIuZ3W0pkZIMNYR3GodSBjA3VVlsUAPK1HprCOuqoQpmHGRV3FzNfcQvZQpSx06YjcFx3fMW8E7mBK0W6egwEk+ObZKkjqIO0hR1Ih/0vfYeGhpmAwgLpUX4OkMQv7+/shCNV0i+GtBrlYX5Kn2QLjNTeCMVvby6KkZ7IhsF/E6jyTDhqDfZMBJAHzUHHGP1cOuR8mJ05PTz0zPzs2MfZM20BgLAfCXGzmEAYTWbN4YRPy3JQxNusauo1V3hF3yopg4T1TbISSB3nSKLhZgL6HLDN8oLxp3ga8vPSTfnD3MTcTzw1ypeHASI6NX88+5Jy1tTWmF1luMRw8voHIKeeZbHBTHGCJgGseW4dU7pySrm3m6w62trZa9o/kQcdrkTNwaw9c8fZVhcV+oqtb5FY0DDgSTw7TKgKT7+gkhH0jyQK6Tt4kG+7eMtmMIAasLj6ELULqtsfw8oJ1jdA+YGjgLYvvPCcoR84Yc63+UWiIxucf78HiSsuUZFvLTpgF73rzSAI3FMS0MnQJtUCSmD/KdwvdGFfyygnb5NZIBGI8ShzTpwnzUcpaWU2oh1p8ytOVmDIsxIlImOkB0w/9AGFDFhaabJhCmcNlH0zgYoGxXHKxHW451LSF86vXQPdQ6sYqy7BmhYlofs7NPpImaZumR5y3jzVvsFLI0nW6ko9WRG6oaVg0v/nA0JCwjHhx1aktw3jGA+yF8dykr2ZisRVsZLg4XpIcSGWOG+b5ilagQIECBZLxG5sJ41WbSDouAAAAAElFTkSuQmCC\n",
+          "display_logo": false,
+          "name": "nites.jpeg",
+          "type": "image/jpeg"
+        },
+        "page_width": "small",
+        "pages_action_color": "#777FFF",
+        "pages_appearance_mode": "light",
+        "pages_background_color": "#F9F9F9",
+        "url_identifier": "bf5edda2fc7a58f4ace9a086b1cee614",
+        "redirect": "https://spring-water-5215.tines.com/pages/Block-Destinations/",
+        "auto_submit_time": "immediately"
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::EventTransformationAgent",
+      "name": "Explode Destinations",
+      "disabled": false,
+      "description": null,
+      "guid": "a42773fa135f58ad81945ebabb72ef25",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:7c49424df557805cc2b62a047090a945",
+      "options": {
+        "mode": "explode",
+        "path": "=extract_destinations.domain",
+        "to": "domain",
+        "limit": "5000"
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "Cisco Umbrella Webhook",
+      "disabled": false,
+      "description": null,
+      "guid": "7de6b46a64849afa5c659170ce3cdafc",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:12d5776dc26e6e808d67fc16a1e4f1ff",
+      "options": {
+        "url": "https://spring-water-5215.tines.com/webhook/4f1c6cd48093fef4552941b858d56b89/52338304ca149ed6c6e20c400c1f31a4",
+        "content_type": "application_json",
+        "method": "post",
+        "payload": {
+          "action": "=TEXT(add_or_remove_destinations_in_cisco_umbrella.body.action)",
+          "comments": "=add_or_remove_destinations_in_cisco_umbrella.body.comments",
+          "analyst_name": "=add_or_remove_destinations_in_cisco_umbrella.headers.email",
+          "domain": "=explode_destinations.domain"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::EventTransformationAgent",
+      "name": "Extract Destinations",
+      "disabled": false,
+      "description": null,
+      "guid": "e0edd1425112ce6c5edafeb548b125bd",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:12d5776dc26e6e808d67fc16a1e4f1ff",
+      "options": {
+        "mode": "extract",
+        "matchers": [
+          {
+            "path": "=add_or_remove_destinations_in_cisco_umbrella.body.destinations",
+            "regexp": "(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]",
+            "to": "domain"
+          }
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "Get Destination Lists in Umbrella",
+      "disabled": false,
+      "description": "Retrieve a list of Destinations Lists using the Cisco Umbrella Management API",
+      "guid": "9113f7d2d1c119d95c9b863c5b70059b",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:e98d71dddfc918c7f03350ee63c5b3fb",
+      "options": {
+        "url": "https://api.umbrella.com/policies/v2/destinationlists",
+        "method": "get",
+        "headers": {
+          "Authorization": "Bearer <<CREDENTIAL.cisco_umbrella>>"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": "34bbeaf88567971eb86426a7fd0c41a497ccb319f61934e3a1d23e7e041d4829",
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "Append Domain IOC to IOC Sunset Resource",
+      "disabled": false,
+      "description": "Append a string or an array to a resource. If the resource has a test value this can be modified by using the is_test parameter.\n\nLink to API documentation: https://www.tines.com/api/resources/append-element",
+      "guid": "51d9768a541a2f9d81b03b423cf138dd",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:0614bf383c47ed843006d0fb2b5ce421",
+      "options": {
+        "url": "https://<<INPUT.tenant_domain>>/api/v1/global_resources/<<INPUT.resource_id>>/append",
+        "method": "post",
+        "headers": {
+          "Authorization": "Bearer <<INPUT.tines_credential>>"
+        },
+        "content_type": "application_json",
+        "local": {
+          "all_parameters": {
+            "value": "=DEFAULT(INPUT.text_value, INPUT.array_value)",
+            "is_test": "=INPUT.is_test_resource"
+          },
+          "final_payload": "=REJECT(\n  LOCAL.all_parameters,\n  LAMBDA(\n    item,\n    OR(\n      item = NULL,\n      IF(\n        OR(\n          TYPE(item) = \"TrueClass\",\n          TYPE(item) = \"FalseClass\",\n          TYPE(item) = \"Integer\"\n        ),\n        IS_EMPTY(TEXT(item)),\n        IS_EMPTY(item)\n      )\n    )\n  )\n)"
+        },
+        "payload": "=LOCAL.final_payload",
+        "retry_on_status": [
+          "0",
+          "400-499",
+          "500"
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 1,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": "b40e331f2e157852280d1116aff9f928555943a8fb098475fb5e987014e3e238",
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::EventTransformationAgent",
+      "name": "Throttle",
+      "disabled": false,
+      "description": null,
+      "guid": "de7b6444c3d67e9649db976c87a01264",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:3f94b639c0eacc5b69f4551219806811",
+      "options": {
+        "mode": "throttle",
+        "interval": "minute",
+        "capacity": "60",
+        "events_per_run": 1
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::EventTransformationAgent",
+      "name": "Append IOC Info",
+      "disabled": false,
+      "description": null,
+      "guid": "1e9674999689c213abf45269a6995c84",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:0614bf383c47ed843006d0fb2b5ce421",
+      "options": {
+        "mode": "message_only",
+        "loop": false,
+        "payload": {
+          "ioc_object": "=OBJECT(\n\"domain\", ioc_mgmt_webhook.body.domain,\n\"date\", (DATE(\"now\", \"%Y-%m-%d\", \"America/Vancouver\"))\n)"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 1,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::EventTransformationAgent",
+      "name": "Throttle",
+      "disabled": false,
+      "description": null,
+      "guid": "b0830916f0675b4da57579f5276a7aca",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:3f94b639c0eacc5b69f4551219806811",
+      "options": {
+        "mode": "throttle",
+        "interval": "minute",
+        "capacity": "60",
+        "events_per_run": "1"
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::TriggerAgent",
+      "name": "Add Destination to Sunset Lists?",
+      "disabled": false,
+      "description": null,
+      "guid": "eb76f9a766df857e5e6e347b59a4fd3a",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:3f94b639c0eacc5b69f4551219806811",
+      "options": {
+        "rules": [
+          {
+            "path": "=ioc_mgmt_webhook.body.action",
+            "type": "in",
+            "value": "Add"
+          }
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "IOC Management",
+      "disabled": false,
+      "description": null,
+      "guid": "93b1888ff0671a7f8f10ac7a8cfe8a11",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:12d5776dc26e6e808d67fc16a1e4f1ff",
+      "options": {
+        "url": "https://spring-water-5215.tines.com/webhook/be30b413c5e6ad6662f3eeed9521223b/57813235204838a0f1c8ff65786508a8",
+        "content_type": "application_json",
+        "method": "post",
+        "payload": {
+          "domain": "<<explode_destinations.domain>>",
+          "action": "<<TEXT(add_or_remove_destinations_in_cisco_umbrella.body.action)>>"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::WebhookAgent",
+      "name": "IOC Mgmt Webhook",
+      "disabled": false,
+      "description": null,
+      "guid": "aaa719c26cb69e65de10105f7968d832",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:12d5776dc26e6e808d67fc16a1e4f1ff",
+      "options": {
+        "path": "28f09a033f6ac16ab1b0073f5f188ad3",
+        "secret": "d719b4a832a2735cf9fe3d009f99a643",
+        "verbs": "get,post"
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::EventTransformationAgent",
+      "name": "Exit-2",
+      "disabled": false,
+      "description": null,
+      "guid": "2301d9a2fdfd22081c1fecd946c77d47",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:12d5776dc26e6e808d67fc16a1e4f1ff",
+      "options": {
+        "mode": "message_only",
+        "loop": false,
+        "payload": {
+          "message": "This is an automatically generated message from Tines"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::EventTransformationAgent",
+      "name": "Explode Domains",
+      "disabled": false,
+      "description": null,
+      "guid": "c43483858e9d3e085bbef7aea1377cbe",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:3f94b639c0eacc5b69f4551219806811",
+      "options": {
+        "mode": "explode",
+        "path": "=extract_domain.domain",
+        "to": "domain",
+        "limit": "500"
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::EventTransformationAgent",
+      "name": "Extract Domain",
+      "disabled": false,
+      "description": null,
+      "guid": "d094af7497a4abda54fad29c5af8b7ee",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:3f94b639c0eacc5b69f4551219806811",
+      "options": {
+        "mode": "extract",
+        "matchers": [
+          {
+            "path": "=TEXT(filter_ioc_domain_sunset_list_for_domains_more_than_90_days_old.data)",
+            "regexp": "(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]",
+            "to": "domain"
+          }
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::EventTransformationAgent",
+      "name": "Filter IOC Domain Sunset List for Domains more than 90 days old",
+      "disabled": false,
+      "description": null,
+      "guid": "e9031d8443d90d16ff89751bbe06087a",
+      "origin_story_identifier": "cloud:c51ce410c124a10e0db5e4b97fc2af39:6ca912ef9144d18eb00ad9d49f769ab8",
+      "options": {
+        "mode": "message_only",
+        "loop": false,
+        "payload": {
+          "data": "=FILTER(RESOURCE.domain_sunset_list, LAMBDA(element, (DATE_DIFF(element.date, DATE(\"Today\", \"%Y%m%dT\")) |> %.days) > 90))"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 1,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": true,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": [
+        {
+          "cron": "0 9 * * *",
+          "timezone": "America/Vancouver"
+        }
+      ]
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "Cisco Umbrella Webhook",
+      "disabled": false,
+      "description": null,
+      "guid": "3b2e5fea573a981f0920cbd928a170db",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:ae34c02c010f867a087c972f2b2ea507",
+      "options": {
+        "url": "\rhttps://spring-water-5215.tines.com/webhook/4f1c6cd48093fef4552941b858d56b89/52338304ca149ed6c6e20c400c1f31a4",
+        "content_type": "application_json",
+        "method": "post",
+        "payload": {
+          "domain": "=explode_domains.domain",
+          "action": "Remove"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "Remove Domain IOC from the IOC Sunset List resource",
+      "disabled": false,
+      "description": "Remove a top level element from an array or key from an object in a resource. The request returns the removed item. If the resource has a test value this can be modified by using the is_test parameter.\n\nLink to API documentation: https://www.tines.com/api/resources/remove-element",
+      "guid": "f0603845290c173f869a81188522a5ce",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:857606884069e4ab0bb819d541c28fa2",
+      "options": {
+        "url": "https://<<INPUT.tenant_domain>>/api/v1/global_resources/<<INPUT.resource_id>>/remove",
+        "method": "post",
+        "headers": {
+          "Authorization": "Bearer <<INPUT.tines_credential>>"
+        },
+        "content_type": "application_json",
+        "local": {
+          "all_parameters": {
+            "key": "=INPUT.key",
+            "index": "=INPUT.index",
+            "is_test": "=INPUT.is_test_resource"
+          },
+          "final_payload": "=REJECT(\n  LOCAL.all_parameters,\n  LAMBDA(\n    item,\n    OR(\n      item = NULL,\n      IF(\n        OR(\n          TYPE(item) = \"TrueClass\",\n          TYPE(item) = \"FalseClass\",\n          TYPE(item) = \"Integer\"\n        ),\n        IS_EMPTY(TEXT(item)),\n        IS_EMPTY(item)\n      )\n    )\n  )\n)"
+        },
+        "payload": "=LOCAL.final_payload"
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": true,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": "fe7850ca94e4fe0672c498843ba254f6eb1499494b39fd2800cbfda6477bfe7c",
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::EventTransformationAgent",
+      "name": "Throttle",
+      "disabled": false,
+      "description": null,
+      "guid": "ed59657f3369b316876c7f0300ff75f6",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:3f94b639c0eacc5b69f4551219806811",
+      "options": {
+        "mode": "throttle",
+        "interval": "minute",
+        "capacity": "60",
+        "events_per_run": 1
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "Remove Domain IOC from the IOC Sunset List resource",
+      "disabled": false,
+      "description": "Remove a top level element from an array or key from an object in a resource. The request returns the removed item. If the resource has a test value this can be modified by using the is_test parameter.\n\nLink to API documentation: https://www.tines.com/api/resources/remove-element",
+      "guid": "790d3139b6501270fbc8c4d7b748f393",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:857606884069e4ab0bb819d541c28fa2",
+      "options": {
+        "url": "https://<<INPUT.tenant_domain>>/api/v1/global_resources/<<INPUT.resource_id>>/remove",
+        "method": "post",
+        "headers": {
+          "Authorization": "Bearer <<INPUT.tines_credential>>"
+        },
+        "content_type": "application_json",
+        "local": {
+          "all_parameters": {
+            "key": "=INPUT.key",
+            "index": "=INPUT.index",
+            "is_test": "=INPUT.is_test_resource"
+          },
+          "final_payload": "=REJECT(\n  LOCAL.all_parameters,\n  LAMBDA(\n    item,\n    OR(\n      item = NULL,\n      IF(\n        OR(\n          TYPE(item) = \"TrueClass\",\n          TYPE(item) = \"FalseClass\",\n          TYPE(item) = \"Integer\"\n        ),\n        IS_EMPTY(TEXT(item)),\n        IS_EMPTY(item)\n      )\n    )\n  )\n)"
+        },
+        "payload": "=LOCAL.final_payload",
+        "retry_on_status": [
+          "0",
+          "400-499",
+          "500"
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 1,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": true,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": "fe7850ca94e4fe0672c498843ba254f6eb1499494b39fd2800cbfda6477bfe7c",
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::TriggerAgent",
+      "name": "Is the IOC Present on the Sunset List?",
+      "disabled": false,
+      "description": null,
+      "guid": "e7b3893a66f34a9312cb836ec764b0ec",
+      "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:3f94b639c0eacc5b69f4551219806811",
+      "options": {
+        "rules": [
+          {
+            "path": "=IS_PRESENT(FILTER(RESOURCE.domain_sunset_list, LAMBDA(i, INCLUDES(i.domain, ioc_mgmt_webhook.body.domain))))",
+            "type": "formula"
+          }
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::EventTransformationAgent",
+      "name": "Throttle",
+      "disabled": false,
+      "description": null,
+      "guid": "e4c280f5421f6bf646cf05e9f7f88577",
+      "origin_story_identifier": "cloud:0babdfaca84c3865dc5749e64fde82f5:72b23852719d40d25f5b90d8a367b250",
+      "options": {
+        "mode": "throttle",
+        "interval": "minute",
+        "capacity": "60",
+        "events_per_run": 1
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    }
+  ],
+  "diagram_notes": [
+    {
+      "content": "# Schedule the sunsetting of domains when the story is published.  Currently, it is set to 90 days, but that can be changed in the first filter action.",
+      "position": [
+        1575,
+        -405
+      ],
+      "guid": "f966597ebcc7d2e4c6bd745ee4d42259",
+      "width": 270
+    },
+    {
+      "content": "# Add/remove IOCs from the sunset list.",
+      "position": [
+        1125,
+        -360
+      ],
+      "guid": "bdb19cdb299e2e32299357896f1d3e43",
+      "width": 227
+    },
+    {
+      "content": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRpN6aBizk7tcnKkgX8_JDOLEl8KjnoHg4kwQ&s",
+      "position": [
+        -330,
+        -1335
+      ],
+      "guid": "7c86c75fbe93fc62410f628d43398197",
+      "width": 270
+    },
+    {
+      "content": "# Requirements\n- Create a Cisco Umbrella API Key/Credential scoped for R/W Policies>Destination Lists.\n- Create a Tines Resource for the Domain Sunset List.\n- Create a Tines Resource for Cisco Umbrella Policy Number.\n- Run the Get Destination Lists in Umbrella action to obtain the Policy Number for the Global Block List.\n",
+      "position": [
+        -330,
+        -1155
+      ],
+      "guid": "88e84284f61e0267692074a9aebd9afc",
+      "width": 270
+    },
+    {
+      "content": "# There is a remove action in the webform to remove a domain if it was blocked in error.",
+      "position": [
+        645,
+        -1065
+      ],
+      "guid": "17b8aad09e8af4482b7353ed9ac12b19",
+      "width": 270
+    },
+    {
+      "content": "# In the append IOC info action, you can change the \"domain\" key to URL or ",
+      "position": [
+        506,
+        -96
+      ],
+      "guid": "287d51228911c20fad2dc9466b5e0a82",
+      "width": 270
+    },
+    {
+      "content": "If a domain is not on the domain sunset list, it will generate a null value when updating the resource.  Tines removes a random resource, so this trigger prevents this error.",
+      "position": [
+        1380,
+        -60
+      ],
+      "guid": "d93baee8397c9bbb4db77657a0b02dc6",
+      "width": 180
+    }
+  ],
+  "links": [
+    {
+      "source": 0,
+      "receiver": 13
+    },
+    {
+      "source": 1,
+      "receiver": 14
+    },
+    {
+      "source": 2,
+      "receiver": 1
+    },
+    {
+      "source": 3,
+      "receiver": 4
+    },
+    {
+      "source": 4,
+      "receiver": 5
+    },
+    {
+      "source": 5,
+      "receiver": 9,
+      "link_type": "secondary"
+    },
+    {
+      "source": 5,
+      "receiver": 11
+    },
+    {
+      "source": 6,
+      "receiver": 8
+    },
+    {
+      "source": 7,
+      "receiver": 5
+    },
+    {
+      "source": 8,
+      "receiver": 7
+    },
+    {
+      "source": 9,
+      "receiver": 12
+    },
+    {
+      "source": 10,
+      "receiver": 14
+    },
+    {
+      "source": 11,
+      "receiver": 6
+    },
+    {
+      "source": 12,
+      "receiver": 10
+    },
+    {
+      "source": 13,
+      "receiver": 2
+    },
+    {
+      "source": 13,
+      "receiver": 37,
+      "link_type": "secondary"
+    },
+    {
+      "source": 15,
+      "receiver": 16
+    },
+    {
+      "source": 15,
+      "receiver": 19
+    },
+    {
+      "source": 17,
+      "receiver": 18
+    },
+    {
+      "source": 17,
+      "receiver": 26
+    },
+    {
+      "source": 19,
+      "receiver": 17
+    },
+    {
+      "source": 21,
+      "receiver": 28
+    },
+    {
+      "source": 22,
+      "receiver": 21
+    },
+    {
+      "source": 23,
+      "receiver": 22
+    },
+    {
+      "source": 24,
+      "receiver": 35
+    },
+    {
+      "source": 25,
+      "receiver": 23
+    },
+    {
+      "source": 25,
+      "receiver": 36,
+      "link_type": "secondary"
+    },
+    {
+      "source": 27,
+      "receiver": 25
+    },
+    {
+      "source": 29,
+      "receiver": 32
+    },
+    {
+      "source": 30,
+      "receiver": 29
+    },
+    {
+      "source": 31,
+      "receiver": 30
+    },
+    {
+      "source": 32,
+      "receiver": 34
+    },
+    {
+      "source": 34,
+      "receiver": 33
+    },
+    {
+      "source": 35,
+      "receiver": 28
+    },
+    {
+      "source": 36,
+      "receiver": 24
+    },
+    {
+      "source": 37,
+      "receiver": 3
+    }
+  ],
+  "diagram_layout": "{\"1fe4df16995b43cc7d9f48f5f96b098b\":[-240,-390],\"bc8716d479156264230ed5fb6a21e6cd\":[-555,150],\"bc7c19953cb5235013ce33695938b100\":[-555,75],\"f91468953a01daeb6ffdd6e5836ee746\":[105,-60],\"ab714a2d141f3e103ec51aec65e65375\":[105,60],\"6b8d858f1d83e400ba2f0d57c8192c84\":[105,150],\"d598fa0c16d8a5cbc56f194f541dbc08\":[105,330],\"102b210ce80f84eb9d220bcf7b288674\":[105,495],\"0aadb8bece539e63d3c79a503ccbe1ac\":[105,405],\"f2c1e73373622e42c55c3587b2d6434f\":[360,225],\"43c352cccb830f303c3b0c295c5d363f\":[360,420],\"1cfc4540fd45004fdb542bb880934346\":[105,255],\"5f8511ab3210105635860ed9d877e457\":[360,330],\"a4f68425eccf7e24148690a015c3372c\":[-240,-300],\"01bb100f44a8b3033092a617478900b6\":[15,705],\"7e2ce8b46ae0741da1ccfc816c9a34d1\":[300,-1110],\"066dbb8c242d49558f5b3e6179fc6213\":[585,-840],\"a42773fa135f58ad81945ebabb72ef25\":[300,-705],\"7de6b46a64849afa5c659170ce3cdafc\":[120,-585],\"e0edd1425112ce6c5edafeb548b125bd\":[300,-795],\"9113f7d2d1c119d95c9b863c5b70059b\":[-330,-915],\"51d9768a541a2f9d81b03b423cf138dd\":[855,195],\"de7b6444c3d67e9649db976c87a01264\":[855,75],\"1e9674999689c213abf45269a6995c84\":[855,-60],\"b0830916f0675b4da57579f5276a7aca\":[1140,75],\"eb76f9a766df857e5e6e347b59a4fd3a\":[1125,-150],\"93b1888ff0671a7f8f10ac7a8cfe8a11\":[420,-585],\"aaa719c26cb69e65de10105f7968d832\":[1125,-285],\"2301d9a2fdfd22081c1fecd946c77d47\":[1140,285],\"c43483858e9d3e085bbef7aea1377cbe\":[1590,0],\"d094af7497a4abda54fad29c5af8b7ee\":[1590,-90],\"e9031d8443d90d16ff89751bbe06087a\":[1590,-255],\"3b2e5fea573a981f0920cbd928a170db\":[1590,90],\"f0603845290c173f869a81188522a5ce\":[1590,270],\"ed59657f3369b316876c7f0300ff75f6\":[1590,180],\"790d3139b6501270fbc8c4d7b748f393\":[1140,150],\"e7b3893a66f34a9312cb836ec764b0ec\":[1140,-45],\"e4c280f5421f6bf646cf05e9f7f88577\":[105,-195]}",
+  "send_to_story_enabled": false,
+  "entry_agent_guid": null,
+  "exit_agent_guids": [],
+  "api_entry_action_guids": [],
+  "api_exit_action_guids": [],
+  "keep_events_for": 86400,
+  "reporting_status": true,
+  "send_to_story_access": null,
+  "story_library_metadata": {},
+  "parent_only_send_to_story": false,
+  "monitor_failures": false,
+  "send_to_stories": [],
+  "synchronous_webhooks_enabled": false,
+  "send_to_story_access_source": 0,
+  "send_to_story_skill_use_requires_confirmation": true,
+  "pages": [
+    {
+      "containers": [
+        {
+          "guid": "b043ae82191a2a20abe5d8e0fe645e87",
+          "ranking": 0,
+          "category": 0
+        },
+        {
+          "guid": "74e9f69ce43c73a819ace449f8ebcec7",
+          "ranking": 1,
+          "category": 0
+        },
+        {
+          "guid": "13a9120c8e18758ec140fd2c094ca365",
+          "ranking": 2,
+          "category": 0
+        },
+        {
+          "guid": "3fc1da63e8f961b7a9a85058a5933645",
+          "ranking": 3,
+          "category": 0
+        },
+        {
+          "guid": "5dec4bd9cbef47082a691e8684f4da40",
+          "ranking": 4,
+          "category": 0
+        }
+      ],
+      "conditions": [],
+      "fields": [
+        {
+          "guid": "fecdd70ddae5d94b8378daecb0c1638c",
+          "name": "Button",
+          "description": "",
+          "required": false,
+          "type": "BUTTON",
+          "multi_select": false,
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "ranking": 0,
+          "max_characters": null,
+          "default_value": null,
+          "content": "Submit",
+          "validation_pattern": null,
+          "style": "primary",
+          "container_guid": "5dec4bd9cbef47082a691e8684f4da40",
+          "graph_type": 0,
+          "graph_direction": "HORIZONTAL",
+          "date_mode": "DATE",
+          "store_value_as": "",
+          "allow_table_row_selection": false,
+          "is_searchable": false
+        },
+        {
+          "guid": "a3d403ef94391dd5ddc2ac032215668d",
+          "name": "Heading",
+          "description": "",
+          "required": false,
+          "type": "TITLE",
+          "multi_select": false,
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "ranking": 0,
+          "max_characters": null,
+          "default_value": null,
+          "content": "Add or Remove Destinations in Cisco Umbrella",
+          "validation_pattern": null,
+          "style": "primary",
+          "container_guid": "b043ae82191a2a20abe5d8e0fe645e87",
+          "graph_type": 0,
+          "graph_direction": "HORIZONTAL",
+          "date_mode": "DATE",
+          "store_value_as": "",
+          "allow_table_row_selection": false,
+          "is_searchable": false
+        },
+        {
+          "guid": "c24ffaeed1d9890515218673aa782979",
+          "name": "Comments",
+          "description": "",
+          "required": false,
+          "type": "SHORT_TEXT",
+          "multi_select": false,
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "ranking": 0,
+          "max_characters": null,
+          "default_value": null,
+          "content": null,
+          "validation_pattern": null,
+          "style": "primary",
+          "container_guid": "3fc1da63e8f961b7a9a85058a5933645",
+          "graph_type": 0,
+          "graph_direction": "HORIZONTAL",
+          "date_mode": "DATE",
+          "store_value_as": "=password_value",
+          "allow_table_row_selection": false,
+          "is_searchable": false
+        },
+        {
+          "guid": "2dcc4925a10c0be3cfe5750eb1e0ccfb",
+          "name": "Action",
+          "description": "",
+          "required": true,
+          "type": "OPTION",
+          "multi_select": false,
+          "options": [
+            "Add",
+            "Remove"
+          ],
+          "ranking": 0,
+          "max_characters": null,
+          "default_value": "[]",
+          "content": null,
+          "validation_pattern": null,
+          "style": "primary",
+          "container_guid": "74e9f69ce43c73a819ace449f8ebcec7",
+          "graph_type": 0,
+          "graph_direction": "HORIZONTAL",
+          "date_mode": "DATE",
+          "store_value_as": "=password_value",
+          "allow_table_row_selection": false,
+          "is_searchable": false
+        },
+        {
+          "guid": "93ddd07b6c6bcd7a900409b2d4d9e267",
+          "name": "Destinations",
+          "description": "Add or remove destinations to the Cisco Umbrella Global Block List using comma separated values.",
+          "required": true,
+          "type": "SHORT_TEXT",
+          "multi_select": false,
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "ranking": 0,
+          "max_characters": null,
+          "default_value": null,
+          "content": null,
+          "validation_pattern": null,
+          "style": "primary",
+          "container_guid": "13a9120c8e18758ec140fd2c094ca365",
+          "graph_type": 0,
+          "graph_direction": "HORIZONTAL",
+          "date_mode": "DATE",
+          "store_value_as": "=password_value",
+          "allow_table_row_selection": false,
+          "is_searchable": false
+        }
+      ],
+      "visibility": "tenant",
+      "agent_guid": "7e2ce8b46ae0741da1ccfc816c9a34d1",
+      "success_message": "",
+      "loading_message": "Please wait…",
+      "logo_contents": "PHN2ZyB3aWR0aD0iMTkyMCIgaGVpZ2h0PSIxMDgwIiB2aWV3Qm94PSIwIDAg\nMTkyMCAxMDgwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5v\ncmcvMjAwMC9zdmciPgo8cmVjdCB3aWR0aD0iMTkyMCIgaGVpZ2h0PSIxMDgw\nIiBmaWxsPSIjOEQ3NUU2Ii8+CjxwYXRoIGQ9Ik05MDIuMjgxIDQ5OC44NjhI\nODgwLjAxNFY1MjIuMDM0SDkwMi4yODFWNTcyLjY0MUM5MDIuMjgxIDU5Ny44\nMzIgOTE4LjQ3NSA2MTIuMjI3IDk0My4yMTYgNjEyLjIyN0g5NjEuNDM0VjU4\nNy4yNjFIOTQ2LjM2NUM5MzYuMDE5IDU4Ny4yNjEgOTI5Ljk0NiA1ODEuNDEz\nIDkyOS45NDYgNTY5Ljk0MlY1MjIuMDM0SDk2MS40MzRWNDk4Ljg2OEg5Mjku\nOTQ2VjQ2NC42OEg5MDIuMjgxVjQ5OC44NjhaIiBmaWxsPSJ3aGl0ZSIvPgo8\ncGF0aCBkPSJNOTc0LjMyNyA0ODEuMDk5SDEwMDQuOTJWNDQ5LjYxSDk3NC4z\nMjdWNDgxLjA5OVpNMTAwMy4zNCA2MTIuMjI3VjQ5OC44NjhIOTc1LjY3NlY2\nMTIuMjI3SDEwMDMuMzRaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTA0\nNy45NyA2MTIuMjI3VjU1MC4zNzRDMTA0Ny45NyA1MzMuNzMgMTA1OC43NiA1\nMjEuNTg0IDEwNzQuMjggNTIxLjU4NEMxMDg4LjQ1IDUyMS41ODQgMTA5Ny45\nIDUzMi4zODEgMTA5Ny45IDU0Ny45VjYxMi4yMjdIMTEyNS41NlY1NDIuMDUy\nQzExMjUuNTYgNTE1LjUxMiAxMTA4LjkyIDQ5Ny4wNjggMTA4My4yOCA0OTcu\nMDY4QzEwNjcuMDggNDk3LjA2OCAxMDU0LjI2IDUwNC4wNDEgMTA0Ny45NyA1\nMTYuNDExVjQ5OC44NjhIMTAyMC4zVjYxMi4yMjdIMTA0Ny45N1oiIGZpbGw9\nIndoaXRlIi8+CjxwYXRoIGQ9Ik0xMjIwLjUxIDU3NC40NEMxMjE3LjU4IDU4\nNS4yMzcgMTIwOC4zNiA1OTEuMDg0IDExOTQuMTkgNTkxLjA4NEMxMTc2LjY1\nIDU5MS4wODQgMTE2NC45NSA1NzkuMzg5IDExNjIuOTMgNTYxLjE3SDEyNDYu\nNkMxMjQ2LjgyIDU1OC45MjEgMTI0Ny4wNSA1NTUuNTQ3IDEyNDcuMDUgNTUx\nLjcyNEMxMjQ3LjA1IDUyNC43MzMgMTIyOS45NSA0OTcuMDY4IDExOTEuOTQg\nNDk3LjA2OEMxMTU0LjgzIDQ5Ny4wNjggMTEzNi4zOSA1MjUuMTgzIDExMzYu\nMzkgNTU1LjA5N0MxMTM2LjM5IDU4NC43ODcgMTE1Ny4wOCA2MTQuMDI2IDEx\nOTQuMTkgNjE0LjAyNkMxMjIyLjA4IDYxNC4wMjYgMTI0My4yMiA1OTguNTA3\nIDEyNDcuNSA1NzQuNDRIMTIyMC41MVpNMTE5MS45NCA1MTcuNzYxQzEyMDgu\nMzYgNTE3Ljc2MSAxMjE4LjI2IDUyOC41NTcgMTIxOS4zOCA1NDIuOTUySDEx\nNjMuNkMxMTY2LjUzIDUyNS44NTggMTE3Ni40MiA1MTcuNzYxIDExOTEuOTQg\nNTE3Ljc2MVoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0xMzAyLjU4IDYx\nNC4wMjZDMTMyOS4xMiA2MTQuMDI2IDEzNDYuNDQgNjAwLjA4MSAxMzQ2LjQ0\nIDU3OC43MTRDMTM0Ni40NCA1MjcuNDMyIDEyODMuNDcgNTU0LjQyMyAxMjgz\nLjQ3IDUyOS45MDZDMTI4My40NyA1MjIuMjU5IDEyODkuOTkgNTE3Ljc2MSAx\nMjk5Ljg4IDUxNy43NjFDMTMwOC42NiA1MTcuNzYxIDEzMTguMzMgNTIzLjE1\nOSAxMzE5LjkgNTMzLjczSDEzNDUuMDlDMTM0My45NyA1MTEuNjg4IDEzMjUu\nNzUgNDk3LjA2OCAxMjk5LjIxIDQ5Ny4wNjhDMTI3NS44MiA0OTcuMDY4IDEy\nNTguNSA1MTEuMDEzIDEyNTguNSA1MzAuODA2QzEyNTguNSA1NzguNzE0IDEz\nMjAuNTggNTU0LjY0OCAxMzIwLjU4IDU3OS44MzlDMTMyMC41OCA1ODYuNTg2\nIDEzMTMuMzggNTkxLjk4NCAxMzAyLjU4IDU5MS45ODRDMTI5MC4yMSA1OTEu\nOTg0IDEyODEuODkgNTg1LjIzNyAxMjgwLjc3IDU3NC40NEgxMjU1LjU4QzEy\nNTYuOTMgNTk4LjczMiAxMjc1LjE0IDYxNC4wMjYgMTMwMi41OCA2MTQuMDI2\nWiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBj\nbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik02NTguMzk3IDQyMEM2MjkuOTkzIDQy\nMCA2MDQuODc4IDQzOC40MzEgNTk2LjM3OCA0NjUuNTE1TDU3MyA1NDBMNTk2\nLjM3OCA2MTQuNDg1QzYwNC44NzggNjQxLjU2OSA2MjkuOTkzIDY2MCA2NTgu\nMzk3IDY2MEg3MjEuMzY5Qzc0OS43NzMgNjYwIDc3NC44ODcgNjQxLjU2OSA3\nODMuMzg4IDYxNC40ODVMODA2Ljc2NiA1NDBMNzgzLjM4OCA0NjUuNTE1Qzc3\nNC44ODcgNDM4LjQzMSA3NDkuNzczIDQyMCA3MjEuMzY5IDQyMEg2NTguMzk3\nWk03MjEuMzcgNDM4LjcyM0M3NDEuNTg3IDQzOC43MjMgNzU5LjQ2MiA0NTEu\nODQxIDc2NS41MTMgNDcxLjExOEw3NzEuMjQ0IDQ4OS4zOEM3NTkuNzE0IDQ3\nOS44NjEgNzQ1LjExMyA0NzQuNTA0IDcyOS44NTIgNDc0LjUwM0w2NDkuNzQz\nIDQ3NC41MDFDNjM0LjU4NSA0NzQuNTAyIDYyMC4wNzggNDc5Ljc4OCA2MDgu\nNTg1IDQ4OS4xODZMNjE0LjI1NSA0NzEuMTE4QzYyMC4zMDYgNDUxLjg0MSA2\nMzguMTgxIDQzOC43MjMgNjU4LjM5OCA0MzguNzIzSDcyMS4zN1pNNjEyLjkw\nOSA1MTEuNDg5TDU5OC4zNTMgNTMwLjYzOUw3ODEuMjQxIDUzMC42MzlMNzY2\nLjY4NyA1MTEuNDkyQzc1Ny45MzkgNDk5Ljk4NSA3NDQuMzExIDQ5My4yMjcg\nNzI5Ljg1MSA0OTMuMjI2SDY0OS4zMDdDNjM1LjAxIDQ5My4zNjEgNjIxLjU2\nOCA1MDAuMDk5IDYxMi45MDkgNTExLjQ4OVpNNzgxLjIxMiA1NDkuMzYyTDc2\nNi42ODUgNTY4LjQ5MkM3NTcuOTM3IDU4MC4wMTEgNzQ0LjMgNTg2Ljc3NyA3\nMjkuODI4IDU4Ni43NzZMNjQ5Ljc2NSA1ODYuNzc0QzYzNS4yOTQgNTg2Ljc3\nNSA2MjEuNjU2IDU4MC4wMDkgNjEyLjkwOCA1NjguNDg5TDU5OC4zODMgNTQ5\nLjM2Mkw3ODEuMjEyIDU0OS4zNjJaTTYxNC4yNTQgNjA4Ljg4MkM2MjAuMzA1\nIDYyOC4xNTkgNjM4LjE4IDY0MS4yNzcgNjU4LjM5NyA2NDEuMjc3SDcyMS4z\nNjlDNzQxLjU4NiA2NDEuMjc3IDc1OS40NjEgNjI4LjE1OSA3NjUuNTExIDYw\nOC44ODJMNzcxLjI0NyA1OTAuNjA3Qzc1OS43MTIgNjAwLjEzNiA3NDUuMSA2\nMDUuNSA3MjkuODI3IDYwNS40OTlMNjQ5Ljc2NiA2MDUuNDk3QzYzNC41OTYg\nNjA1LjQ5OCA2MjAuMDc3IDYwMC4yMDYgNjA4LjU3OCA1OTAuNzk1TDYxNC4y\nNTQgNjA4Ljg4MloiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=\n",
+      "logo_filename": "TinesLogoWhite-PurpleBG.svg",
+      "display_logo": true,
+      "icon": ":building_construction:",
+      "sso_groups": null
+    },
+    {
+      "containers": [
+        {
+          "guid": "bb584a0d7ccd8c33208bfbc129f58300",
+          "ranking": 0,
+          "category": 0
+        },
+        {
+          "guid": "013eef9dfab80a0f803d52f1a1e4b453",
+          "ranking": 1,
+          "category": 0
+        },
+        {
+          "guid": "b95865f3ed6e511bce837f0822c49f85",
+          "ranking": 2,
+          "category": 0
+        }
+      ],
+      "conditions": [],
+      "fields": [
+        {
+          "guid": "1c3a1055a397ea2f1823be339d66ee51",
+          "name": "Heading",
+          "description": "",
+          "required": false,
+          "type": "TITLE",
+          "multi_select": false,
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "ranking": 0,
+          "max_characters": null,
+          "default_value": null,
+          "content": "My new page ✨",
+          "validation_pattern": null,
+          "style": "primary",
+          "container_guid": "bb584a0d7ccd8c33208bfbc129f58300",
+          "graph_type": 0,
+          "graph_direction": "HORIZONTAL",
+          "date_mode": "DATE",
+          "store_value_as": "",
+          "allow_table_row_selection": false,
+          "is_searchable": false
+        },
+        {
+          "guid": "cb21d25a83e2df28c4bf330c455e5188",
+          "name": "Paragraph",
+          "description": "",
+          "required": false,
+          "type": "PARAGRAPH",
+          "multi_select": false,
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "ranking": 0,
+          "max_characters": null,
+          "default_value": null,
+          "content": "Use the panel on the left to style and manage your page. Edit, sort, and delete page elements by selecting them on the page. And add new elements by dragging them from the left panel and onto the page.",
+          "validation_pattern": null,
+          "style": "primary",
+          "container_guid": "013eef9dfab80a0f803d52f1a1e4b453",
+          "graph_type": 0,
+          "graph_direction": "HORIZONTAL",
+          "date_mode": "DATE",
+          "store_value_as": "",
+          "allow_table_row_selection": false,
+          "is_searchable": false
+        },
+        {
+          "guid": "d5a74125b816005f4142e6183187b6dc",
+          "name": "Button",
+          "description": "",
+          "required": false,
+          "type": "BUTTON",
+          "multi_select": false,
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "ranking": 0,
+          "max_characters": null,
+          "default_value": null,
+          "content": "Submit",
+          "validation_pattern": null,
+          "style": "primary",
+          "container_guid": "b95865f3ed6e511bce837f0822c49f85",
+          "graph_type": 0,
+          "graph_direction": "HORIZONTAL",
+          "date_mode": "DATE",
+          "store_value_as": "",
+          "allow_table_row_selection": false,
+          "is_searchable": false
+        }
+      ],
+      "visibility": "tenant",
+      "agent_guid": "066dbb8c242d49558f5b3e6179fc6213",
+      "success_message": "",
+      "loading_message": "",
+      "logo_contents": "iVBORw0KGgoAAAANSUhEUgAAAFQAAAAYCAYAAABk8drWAAAACXBIWXMAAAsT\nAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAARCSURB\nVHgB7VhLctpAEB1k7LVyA/kEgRMEn8BQ5e8qcALjE1icAPsEkJW/VeATwA1Q\nTmDlBCE7l3/kPblbTIiMJcVOeaFXBRrN9Mz0vOnu6ZExBQoUKFCgwAdByX4Z\nDAbuw8PDwWw2a+LVk+rAcZxgZWWl02g0QpMSl5eXXRlnvLq62kLfqcmIi4uL\nZqlU+lwulztJ/aGvJ/p+39nZ6cu8R3j30c/f3t7umP8MRwtXV1df7+/vb6iM\nmZNJVJ6enppom5ydnbVNCpAIjENZF786Fn1kMgLE1PDocRz0HyTJQKe2zNOj\nMbBO3o1sZgS2Ybw29KqYd0ZEKMg8AGl980zAS3BhqV0Sv0Qmsho8/iCQi5T6\nXED/WtJmoj7W9/b2Vgk9gXUGWM+JtoF4H/VdFEdK/HvB4UIxuZ+2A2SPlykF\nayLhXkJ9z/wDsJlHaTZld3fXR4ho7O3tHWudRbyrxC+Ca+L4rxFuyXlJ7c7j\n4yOtKcuuuXd3d+0XJvMkZPwFWpm4cV64sLTBawuGB/UYus7Pz7vUB3NOYLGx\nV+EsuIHrT2ydITNCn5/sxyfaKdO0x02Qo8wNY7Yt52ChmeOKraAN2ZxlyBxL\nZb6xFCuvxWN4UE361PGYYn1egli0KSQJxIy42VIfso959rCehplFOYYUkY0M\nCJvn68C5CDUJLi2ho7msExVa3Pk0QL9veJxIuZ3W0pkZIMNYR3GodSBjA3VV\nlsUAPK1HprCOuqoQpmHGRV3FzNfcQvZQpSx06YjcFx3fMW8E7mBK0W6egwEk\n+ObZKkjqIO0hR1Ih/0vfYeGhpmAwgLpUX4OkMQv7+/shCNV0i+GtBrlYX5Kn\n2QLjNTeCMVvby6KkZ7IhsF/E6jyTDhqDfZMBJAHzUHHGP1cOuR8mJ05PTz0z\nPzs2MfZM20BgLAfCXGzmEAYTWbN4YRPy3JQxNusauo1V3hF3yopg4T1TbISS\nB3nSKLhZgL6HLDN8oLxp3ga8vPSTfnD3MTcTzw1ypeHASI6NX88+5Jy1tTWm\nF1luMRw8voHIKeeZbHBTHGCJgGseW4dU7pySrm3m6w62trZa9o/kQcdrkTNw\naw9c8fZVhcV+oqtb5FY0DDgSTw7TKgKT7+gkhH0jyQK6Tt4kG+7eMtmMIAas\nLj6ELULqtsfw8oJ1jdA+YGjgLYvvPCcoR84Yc63+UWiIxucf78HiSsuUZFvL\nTpgF73rzSAI3FMS0MnQJtUCSmD/KdwvdGFfyygnb5NZIBGI8ShzTpwnzUcpa\nWU2oh1p8ytOVmDIsxIlImOkB0w/9AGFDFhaabJhCmcNlH0zgYoGxXHKxHW45\n1LSF86vXQPdQ6sYqy7BmhYlofs7NPpImaZumR5y3jzVvsFLI0nW6ko9WRG6o\naVg0v/nA0JCwjHhx1aktw3jGA+yF8dykr2ZisRVsZLg4XpIcSGWOG+b5ilag\nQIECBZLxG5sJ41WbSDouAAAAAElFTkSuQmCC\n",
+      "logo_filename": "image",
+      "display_logo": false,
+      "icon": ":magic_wand:",
+      "sso_groups": null
+    }
+  ],
+  "tags": [],
+  "time_saved_unit": "minutes",
+  "time_saved_value": 0,
+  "origin_story_identifier": "cloud:256caef50de818d681816208610a2c92:12d5776dc26e6e808d67fc16a1e4f1ff",
+  "integration_product": null,
+  "integration_vendor": null,
+  "llm_product_instructions": "",
+  "exported_at": "2024-12-27T05:09:24Z",
+  "icon": ":trophy:",
+  "integrations": [
+    {
+      "action_inputs": [
+        {
+          "name": "Tenant domain",
+          "description": "The domain of the tenant.",
+          "required": true,
+          "type": "TEXT",
+          "ranking": 0,
+          "value": "\"<<META.tenant.domain>>\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": false,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        },
+        {
+          "name": "Tines credential",
+          "description": "",
+          "required": false,
+          "type": "CREDENTIAL",
+          "ranking": 1073741824,
+          "value": "\"=CREDENTIAL.tines_resources\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": false,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        },
+        {
+          "name": "Resource ID",
+          "description": "The ID of the resource you are querying for. You can identify this with the INFO key.",
+          "required": false,
+          "type": "NUMBER",
+          "ranking": 1610612736,
+          "value": "\"=INFO.resource.domain_sunset_list.id\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": false,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        },
+        {
+          "name": "Index",
+          "description": "The index of the element to remove if removing from an array (with indexes starting at 0). You must use either the key or index parameter.",
+          "required": false,
+          "type": "NUMBER",
+          "ranking": 1879048192,
+          "value": "\"=INDEX_OF(RESOURCE.domain_sunset_list, LAMBDA(item, item.domain = ioc_mgmt_webhook.body.domain))\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": false,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        },
+        {
+          "name": "Is test resource?",
+          "description": "Select 'yes' to remove an element from the test resource.",
+          "required": false,
+          "type": "BOOLEAN",
+          "ranking": 2013265920,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        },
+        {
+          "name": "Key",
+          "description": "The object key to remove if removing from an object. You must use either the key or index parameter.",
+          "required": false,
+          "type": "TEXT",
+          "ranking": 2080374784,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        }
+      ],
+      "action_guid": "790d3139b6501270fbc8c4d7b748f393",
+      "product": "Tines",
+      "action_options_keys": []
+    },
+    {
+      "action_inputs": [
+        {
+          "name": "Tenant domain",
+          "description": "The domain of the tenant.",
+          "required": true,
+          "type": "TEXT",
+          "ranking": 0,
+          "value": "\"<<META.tenant.domain>>\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": false,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"\\\"{}\\\"\""
+        },
+        {
+          "name": "Tines credential",
+          "description": "",
+          "required": false,
+          "type": "CREDENTIAL",
+          "ranking": 1073741824,
+          "value": "\"=CREDENTIAL.tines_resources\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": false,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"\\\"{}\\\"\""
+        },
+        {
+          "name": "Resource ID",
+          "description": "The ID of the resource you are querying for. You can identify this with the INFO key.",
+          "required": false,
+          "type": "NUMBER",
+          "ranking": 1610612736,
+          "value": "\"=INFO.resource.domain_sunset_list.id\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": false,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"\\\"{}\\\"\""
+        },
+        {
+          "name": "Is test resource?",
+          "description": "Select 'yes' to append an element to the test resource.",
+          "required": false,
+          "type": "BOOLEAN",
+          "ranking": 1879048192,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"\\\"{}\\\"\""
+        },
+        {
+          "name": "Array value",
+          "description": "The array to append to the resource. Use this input instead of the 'Text value' input if you are appending an array.",
+          "required": false,
+          "type": "OBJECT",
+          "ranking": 2013265920,
+          "value": "\"=append_ioc_info.ioc_object\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": false,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"\\\"{}\\\"\""
+        },
+        {
+          "name": "Text value",
+          "description": "The text to append to the resource. Use this input instead of the 'Array value' input if you are just appending text.",
+          "required": false,
+          "type": "TEXT",
+          "ranking": 2080374784,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"\\\"{}\\\"\""
+        }
+      ],
+      "action_guid": "51d9768a541a2f9d81b03b423cf138dd",
+      "product": "Tines",
+      "action_options_keys": []
+    },
+    {
+      "action_inputs": [
+        {
+          "name": "Tenant domain",
+          "description": "The domain of the tenant.",
+          "required": true,
+          "type": "TEXT",
+          "ranking": 0,
+          "value": "\"<<META.tenant.domain>>\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": false,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        },
+        {
+          "name": "Tines credential",
+          "description": "",
+          "required": false,
+          "type": "CREDENTIAL",
+          "ranking": 1073741824,
+          "value": "\"=CREDENTIAL.tines_resources\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": false,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        },
+        {
+          "name": "Resource ID",
+          "description": "The ID of the resource you are querying for. You can identify this with the INFO key.",
+          "required": false,
+          "type": "NUMBER",
+          "ranking": 1610612736,
+          "value": "\"=INFO.resource.domain_sunset_list.id\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": false,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        },
+        {
+          "name": "Index",
+          "description": "The index of the element to remove if removing from an array (with indexes starting at 0). You must use either the key or index parameter.",
+          "required": false,
+          "type": "NUMBER",
+          "ranking": 1879048192,
+          "value": "\"=INDEX_OF(RESOURCE.domain_sunset_list, LAMBDA(item, item.domain = explode_domains.domain))\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": false,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        },
+        {
+          "name": "Is test resource?",
+          "description": "Select 'yes' to remove an element from the test resource.",
+          "required": false,
+          "type": "BOOLEAN",
+          "ranking": 2013265920,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        },
+        {
+          "name": "Key",
+          "description": "The object key to remove if removing from an object. You must use either the key or index parameter.",
+          "required": false,
+          "type": "TEXT",
+          "ranking": 2080374784,
+          "value": "\"\"",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "is_collapsed": true,
+          "sub_type": "HTML",
+          "multi_select_enabled": false,
+          "llm_json_schema": "\"{}\""
+        }
+      ],
+      "action_guid": "f0603845290c173f869a81188522a5ce",
+      "product": "Tines",
+      "action_options_keys": []
+    }
+  ]
+}
