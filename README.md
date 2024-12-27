@@ -58,6 +58,7 @@ Tom
 - [Tines WHERE Function](https://www.tines.com/docs/formulas/functions/where/)
 - [Tines FILTER Function](https://www.tines.com/docs/formulas/functions/filter/)
 - [Tines INCLUDES Function](https://www.tines.com/docs/formulas/functions/includes/)
+- [Tines LAMBDA Function](https://www.tines.com/docs/formulas/functions/lambda/)
 
 ## Cisco Technical Resources
 - [Cisco Umbrella Sign Up](https://signup.umbrella.com/)
