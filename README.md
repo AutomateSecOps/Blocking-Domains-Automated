@@ -15,7 +15,7 @@ Cisco Umbrella defines a destination as a :
 2. URL, 
 3. or IP address.   
 
-In this Tines Story, I blocked domains.
+In this Tines Story, I block domains.
 
 ## API Scope
 For adding or removing an IOC to/from the global blocklist, the API key pair needs to have read/write access to Policies/Destination Lists.
