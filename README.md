@@ -28,7 +28,7 @@ In order to remove a destination, the workflow builds the entire list of Umbrell
 
 <img src="./images/WHERE_Function_Umbrella_ID.png">
 
-Under the [tines](story) folder, I include the pagination loop for building the array in order to obtain the destination's Umbrella ID.
+Under the [tines](https://github.com/AutomateSecOps/Blocking-Domains-Automated/tree/main/story) folder, I include the pagination loop for building the array in order to obtain the destination's Umbrella ID.
 
 I opened a ticket with Umbrella support to update their API schema to allow for a direct query for a destiatnion's Umbrella ID.
 
