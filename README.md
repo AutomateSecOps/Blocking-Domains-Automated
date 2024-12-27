@@ -37,7 +37,7 @@ In addition, I have two workflows which manage the entire lifecycle of the block
 ## A Trigger action to check the sunset list prior to removing it from the Tines Resource.
 While performing quality checks on the workflow, I selected the Remove action from the webform instead of the Add action.  When the domain IOC was sent to the IOC management workflow, it generated a null value when checking for the index of the IOC since it was not present in the sunset list.  For some reason the null value caused the Tines action to remove a random domain from the sunset list.  
 
-I use this trigger to prevent this from happening:
+I used this trigger to prevent this from happening:
 <img src="./images/Trigger_IOC_Present.png">
 
 I hope you found this useful.
