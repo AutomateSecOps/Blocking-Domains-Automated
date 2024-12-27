@@ -1,4 +1,5 @@
-## Automate Blocking Domains in Cisco Umbrella with Tines
+## Blocking Domains in Cisco Umbrella, automated by Tines.
+
 For Security Operations, IOC management is a challenge.  
 
 How does one team with limited time and resources track Indicators of Compromise (IOCs) in all their security solutions and lifecycle them appropriately?  
