@@ -29,6 +29,13 @@ In order to remove a destination, the workflow needs to build the entire list of
 Under the [tines](story) folder, I include the pagination loop for building the array in order to obtain the destination's Umbrella ID.
 
 In addition, I have a workflow which manages the entire lifecycle of the blocked destination.  The workflow sunsets the blocked destination after 90 days, which can be changed.
+## A Trigger action to check the sunset list prior to removing it from the Tines Resource.
+While performing quality checks on the workflow, I selected the Remove action from the webform instead of the Add action.  When the domain IOC was sent to the IOC management workflow, it generated a null value when checking for the index of the IOC.  For some reason, the Tines action removed a random domain from the sunset list.  
+
+I use this trigger to prevent this from happening:
+<img src="./images/Trigger_IOC_Present.png">
+
+I hope you found this useful.
 
 Once you start automating, you cannot stop.
 
